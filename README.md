@@ -1,78 +1,88 @@
-## Tour Reservation Sample Application
-This is a reference application built completely using TERASOLUNA Server Framework for Java (5.x) ([http://terasoluna.org](http://terasoluna.org "http://terasoluna.org")).
+Terasoluna Tour Reservation Docker 環境
 
-This application shows **how an IDEAL project configuration and package structure must be like.** It also shows working sample of best practices recommended in TERASOLUNA Server Framework for Java (5.x) Development Guideline.
+このリポジトリは、Terasoluna Tour Reservation サンプルアプリを Docker + Docker Compose で動作させるための構成ファイルと初期化スクリプトを含んでいます。
 
-**This sample uses Spring Data JPA.**
+🚀 プロジェクト概要
 
-### Getting started
+アプリケーション: Terasoluna Tour Reservation (Spring Framework / JSP)
 
-#### Download
+ビルド: Maven
 
-Download source code from [here](https://github.com/terasolunaorg/terasoluna-tourreservation/releases "here").
-Extract the zip file at any location of choice.
+Web サーバ: Apache Tomcat 9
 
-#### Run PostgreSQL
+DB: PostgreSQL 16
 
-Install and start PostgreSQL.
-select 'P0stgres' as password for db user or select any password of choice. Be sure to remember the password. 
-If 'P0stgres' is not used, some changes will be required in configuration files. Hence be sure to remember it.
+コンテナ管理: Docker / Docker Compose
 
-### Run PostgreSQL
+📋 前提条件
 
-Install and start PostgreSQL.
+Docker 20.10 以上
 
-create database 'tourreserve'.
+Docker Compose v2 以上
 
-#### Insert test data
+ポート 8080, 5432 が空いていること（別ポート使用可）
 
-It is assumed that maven is already installed.
-Move to the directory where the downloaded source-code is unzipped.
-If password of db user is set to 'P0stgres' its not required to edit any file and directly execute the below command.
-If it is set to any other password, then update the password in `terasoluna-tourreservation-initdb/pom.xml`.
+🔧 セットアップ手順
 
-Execute the below command:
+リポジトリをクローン
 
-```console
-$ mvn -f terasoluna-tourreservation-initdb/pom.xml sql:execute
-```
+git clone https://github.com/<your-org>/terasoluna-tourreservation.git
+cd terasoluna-tourreservation
 
-Test data is currently available in Japanese only.
+SQL 初期化スクリプトを配置
 
-#### Install jars and build war
+terasoluna-tourreservation-initdb/src/main/sqls/postgres/ 以下の .sql が /docker-entrypoint-initdb.d にマウントされています。
 
-If db user password is not set to 'P0stgres', then go to `terasoluna-tourreservation-env/src/main/resources/META-INF/spring/terasoluna-tourreservation-infra.properties` and update the password. If it is set to 'P0stgres', no changes are required.
+必要に応じて initdb フォルダを作成し、独自の SQL を追加してください。
 
-```console
-$ mvn clean install
-```
+Docker イメージのビルド
 
-#### Run server and deploy war
+docker compose build
 
-Deploy `terasoluna-tourreservation-web/target/terasoluna-tourreservation-web.war` to your Application server (e.g. Tomcat9)
+コンテナの起動
 
-You can also use `mvn cargo:run` to test this application quickly with option `MAVEN_OPTS=-XX:MaxPermSize=256m` in environment variable.
+docker compose up -d
 
-```console
-$ mvn -f terasoluna-tourreservation-web/pom.xml cargo:run
-```
+動作確認
 
-access [http://localhost:8080/terasoluna-tourreservation-web/](http://localhost:8080/terasoluna-tourreservation-web/)
+ブラウザで http://localhost:8080/ にアクセスし、アプリのトップページが表示されることを確認します。
 
-Alternatively, these project can also be imported into Eclipse and application can be run using WTP.
+コンテナ停止／削除
 
-#### Test with selenium
+docker compose down        # コンテナ停止
+docker compose down -v     # ボリューム（DB データ）も削除
 
-Install Firefox to run test.  
-[geckodriver](https://github.com/mozilla/geckodriver/releases) (`v0.30.0` recommended) placed in application execution environment and add to `PATH`.
+🗂 ディレクトリ構成
 
-Run test.
+├─Dockerfile
+├─docker-compose.yml
+├─context.xml            # JNDI データソース設定
+├─terasoluna-tourreservation-domain
+├─terasoluna-tourreservation-web
+├─terasoluna-tourreservation-initdb
+└─terasoluna-tourreservation-env
 
-```console
-$ mvn -f terasoluna-tourreservation-selenium/pom.xml clean test
-```
+✏️ CRUD 機能追加
 
-> **Note:**
->
-> If GeckoDriver is not registered in the path, [webdrivermanager](https://github.com/bonigarcia/webdrivermanager) will download it automatically.
-> Configure using [properties](https://github.com/bonigarcia/webdrivermanager#webdrivermanager-api) in `wdm.properties` or Java System Properties.
+名前・年齢・メールアドレスの Person エンティティ CRUD を追加したい場合:
+
+initdb に SQL (00300_create_person.sql, 00310_insert_person.sql) を追加
+
+Domain レイヤに Person.java, PersonRepository, PersonService を実装
+
+Web レイヤに PersonForm, PersonController, JSP を作成
+
+メニューリンクを追加→再ビルド＆再起動
+
+💾 バックアップ／復元
+
+ソース一式: Git で管理
+
+DB 初期化: initdb の SQL で自動再生成
+
+実データ残存: pg_dump でダンプ取得
+
+📄 ライセンス
+
+MIT License
+
