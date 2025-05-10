@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: tour_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: P0stgres        # README と合わせる
+      POSTGRES_DB: tourreserve
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+
+  app:
+    build: .
+    container_name: tour_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://db:5432/tourreserve"
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: P0stgres
+    ports:
+      - "8080:8080"
